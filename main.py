@@ -49,6 +49,46 @@ def fifo(n, ref_list):
         fList.append(-1)
     return fList
 
+def sc(n, ref_list):
+    pages = [-1] * n  # Inicializa os slots de memória com -1 (vazio)
+    idx = 0  # Índice para percorrer os slots de memória
+    ref_bits = [0] * n  # Bit de referência para cada slot de memória
+
+    for p in ref_list:
+        if p in pages:  # Página já está na memória
+            ref_bits[pages.index(p)] = 1  # Define o bit de referência como 1
+        else:  # Page fault (página não está na memória)
+            while True:
+                if ref_bits[idx] == 0:  # Encontrou uma página com o bit de referência igual a 0
+                    pages[idx] = p  # Substitui a página
+                    ref_bits[idx] = 1  # Define o bit de referência como 1
+                    idx = (idx + 1) % n  # Move para o próximo slot de memória
+                    break
+                else:
+                    ref_bits[idx] = 0  # Define o bit de referência como 0
+                    idx = (idx + 1) % n  # Move para o próximo slot de memória
+
+    return pages
+
+def mru(n, ref_list):
+    pages = [-1] * n  # Inicializa os slots de memória com -1 (vazio)
+    idx = 0  # Índice para percorrer os slots de memória
+    time = [0] * n  # Registro de tempo de acesso para cada slot de memória
+
+    for p in ref_list:
+        if p in pages:  # Página já está na memória
+            idx = pages.index(p)  # Obtém o índice da página na memória
+            time[idx] = 0  # Atualiza o tempo de acesso para 0 (mais recente)
+        else:  # Page fault (página não está na memória)
+            oldest_idx = time.index(max(time))  # Obtém o índice da página mais antiga (maior tempo)
+            pages[oldest_idx] = p  # Substitui a página mais antiga pela nova página
+            time[oldest_idx] = 0  # Define o tempo de acesso para 0 (mais recente)
+
+        # Incrementa o tempo de acesso de todas as páginas
+        time = [t + 1 for t in time]
+
+    return pages
+
 processos = []
 for i in range(10):
     p = Processo()
@@ -60,7 +100,8 @@ for processo in processos:
 if __name__ == '__main__':
     print("Escolha uma opção:")
     print("[1]FIFO\n[2]NUR\n[3]CLOCK\n[4]SC\n[5]MRU\n")
-    match input():
+    option = input()
+    match option:
         case "1":
             processos = fifo(3, processos)
         case "2":
@@ -68,9 +109,9 @@ if __name__ == '__main__':
         case "3":
             processos = clock(3, processos)
         case "4":
-            pass
+            processos = sc(3, processos)
         case "5":
-            pass
+            processos = mru(3, processos)
 
     for processo in processos:
         print(processo.id)
