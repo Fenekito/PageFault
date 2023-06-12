@@ -1,5 +1,8 @@
 from itertools import cycle
 from processo import Processo
+from random import randint
+
+maxPages = 10
 
 def clock(n, ref_list):
     pages = [-1] * n  # Initialize memory slots with -1 (empty)
@@ -8,7 +11,7 @@ def clock(n, ref_list):
     bits = 0  # Variable to store the bits
 
     for p in ref_list:
-        if p in d:  # Page already in memory
+        if p.pageId in d:  # Page already in memory
             bits |= d[p]  # Set the corresponding bit for the page
         else:  # Page fault
             for i, b in idx:
@@ -24,16 +27,17 @@ def clock(n, ref_list):
 
     return pages
 
-def lru(n, ref_list):
+def mru(n, ref_list):
     cache, time = [-1] * n, [-1] * n
     for i, x in enumerate(ref_list):
-        idx = cache.index(x) if x in cache else time.index(min(time))
+        idx = cache.index(x) if x.pageId in cache else time.index(min(time))
         cache[idx] = x
         time[idx] = i
     return cache
 
 def fifo(n, ref_list):
     fList = []
+    pIds = [p.pageId for p in ref_list]
     counter = 0
     for i in ref_list:
         if len(fList) < n and not i in fList:
@@ -46,7 +50,9 @@ def fifo(n, ref_list):
     if ref_list == []:
         return [-1 for x in range(n)]
     while len(fList) < n:
+        #endereco vazio
         fList.append(-1)
+
     return fList
 
 def sc(n, ref_list):
@@ -70,48 +76,26 @@ def sc(n, ref_list):
 
     return pages
 
-def mru(n, ref_list):
-    pages = [-1] * n  # Inicializa os slots de memória com -1 (vazio)
-    idx = 0  # Índice para percorrer os slots de memória
-    time = [0] * n  # Registro de tempo de acesso para cada slot de memória
-
-    for p in ref_list:
-        if p in pages:  # Página já está na memória
-            idx = pages.index(p)  # Obtém o índice da página na memória
-            time[idx] = 0  # Atualiza o tempo de acesso para 0 (mais recente)
-        else:  # Page fault (página não está na memória)
-            oldest_idx = time.index(max(time))  # Obtém o índice da página mais antiga (maior tempo)
-            pages[oldest_idx] = p  # Substitui a página mais antiga pela nova página
-            time[oldest_idx] = 0  # Define o tempo de acesso para 0 (mais recente)
-
-        # Incrementa o tempo de acesso de todas as páginas
-        time = [t + 1 for t in time]
-
-    return pages
-
 processos = []
 for i in range(10):
-    p = Processo()
-    processos.append(p)
-
-for processo in processos:
-    print(processo.id)
+    p = randint(1, maxPages)
+    processos.append(Processo(p))
+    print(processos[i].id)
 
 if __name__ == '__main__':
     print("Escolha uma opção:")
-    print("[1]FIFO\n[2]NUR\n[3]CLOCK\n[4]SC\n[5]MRU\n")
-    option = input()
-    match option:
+    print("[1]FIFO\n[2]MRU\n[3]CLOCK\n[4]SC\n[5]NUR\n")
+    match input():
         case "1":
-            processos = fifo(3, processos)
+            processos = fifo(maxPages, processos)
         case "2":
-            processos = lru(3, processos)
+            processos = mru(maxPages, processos)
         case "3":
-            processos = clock(3, processos)
+            processos = clock(maxPages, processos)
         case "4":
-            processos = sc(3, processos)
+            processos = sc(maxPages, processos)
         case "5":
-            processos = mru(3, processos)
+            pass
 
-    for processo in processos:
-        print(processo.id)
+    for p in processos:
+        print(p.id)
